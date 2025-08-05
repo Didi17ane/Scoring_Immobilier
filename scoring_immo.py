@@ -57,5 +57,5 @@ st.subheader("📈 Vue d'ensemble des scores")
 st.bar_chart(df[['Nom', 'Score']].set_index('Nom'))
 
 # Bouton de téléchargement du rapport PDF
-with open("Rapport_Scoring_Tylimmo.pdf", "rb") as f:
-    st.download_button("📥 Télécharger le rapport PDF", f, file_name="Rapport_Scoring_Tylimmo.pdf")
+# with open("Rapport_Scoring_Tylimmo.pdf", "rb") as f:
+#    st.download_button("📥 Télécharger le rapport PDF", f, file_name="Rapport_Scoring_Tylimmo.pdf")
