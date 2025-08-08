@@ -8,7 +8,7 @@ st.title("📊 Tableau de Scoring des Locataires")
 
 # 1. Génération du dataset fictif
 n = 100
-noms = [f"Locataire_{i}" for i in range(n)]
+noms = [f"Locataire_{i}" for i in range(n)] 
 revenus = [random.randint(150000, 1000000) for _ in range(n)]
 loyers = [random.randint(50000, 300000) for _ in range(n)]
 types_location = random.choices(["Meublé", "Non meublé", "Professionnelle"], k=n)
