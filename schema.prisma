@@ -1,0 +1,424 @@
+// TyliPro Database Schema
+// Système de gestion locative et de scoring locatif
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Table des candidats
+model Candidate {
+  candidateId   String   @id @default(uuid()) @map("candidate_id") @db.Uuid
+  name          String   @db.VarChar(100)
+  firstName     String   @map("first_name") @db.VarChar(100)
+  email         String   @unique @db.VarChar(150)
+  phone         String   @unique @db.VarChar(20)
+  dateOfBirth   DateTime @map("date_of_birth") @db.Date
+  whatsapp      String   @unique @db.VarChar(20)
+
+  // Relations
+  candidacies         Candidacy[]
+  documents          Document[]
+  commonInformations CommonInformation[]
+
+  @@map("candidates")
+}
+
+// Table des utilisateurs
+model User {
+  userId      String   @id @default(uuid()) @map("user_id") @db.Uuid
+  name        String   @db.VarChar(100)
+  firstName   String   @map("first_name") @db.VarChar(100)
+  email       String   @unique @db.VarChar(150)
+  phone       String   @unique @db.VarChar(20)
+  dateOfBirth DateTime @map("date_of_birth") @db.Date
+  whatsapp    String   @unique @db.VarChar(20)
+
+  // Relations
+  tenants            Tenant[]
+  owners             Owner[]
+  documents          Document[]
+  commonInformations CommonInformation[]
+  agencyEmployees    AgencyEmployee[]
+
+  @@map("users")
+}
+
+// Table des informations communes
+model CommonInformation {
+  commonId             String  @id @default(uuid()) @map("common_id") @db.Uuid
+  userId               String? @map("user_id") @db.Uuid
+  agencyId             String? @map("agency_id") @db.Uuid
+  companyId            String? @map("company_id") @db.Uuid
+  candidateId          String? @map("candidate_id") @db.Uuid
+  address              String? @db.VarChar(200)
+  country              String? @db.VarChar(20)
+  city                 String? @db.VarChar(20)
+  municipality         String? @db.VarChar(20)
+  neighborhood         String? @db.VarChar(20)
+  socialReason         SocialReason? @map("social_reason")
+  landlineNumber       String? @map("landline_number") @db.VarChar(20)
+  monthlyIncome        Float?  @map("monthly_income") @db.DoublePrecision
+  function             String? @db.VarChar(50)
+  fieldOfActivity      FieldOfActivity? @map("field_of_activity")
+  contractType         String? @map("contract_type") @db.VarChar(20)
+  monthlyCharge        Float?  @map("monthly_charge") @db.DoublePrecision
+  debt                 Float?  @db.DoublePrecision
+  professionalExperience Int?  @map("professional_experience")
+  nbrHomesPassed       Int?    @map("nbr_homes_passed")
+  nbrDependents        Int?    @map("nbr_dependents")
+
+  // Relations
+  user      User?      @relation(fields: [userId], references: [userId])
+  agency    Agency?    @relation(fields: [agencyId], references: [agencyId])
+  company   Company?   @relation(fields: [companyId], references: [companyId])
+  candidate Candidate? @relation(fields: [candidateId], references: [candidateId])
+
+  @@map("common_informations")
+}
+
+// Table des candidatures
+model Candidacy {
+  candidacyId   String           @id @default(uuid()) @map("candidacy_id") @db.Uuid
+  status        CandidacyStatus
+  statusMessage String?          @map("status_message") @db.VarChar(255)
+  candidateId   String           @map("candidate_id") @db.Uuid
+  rentId        String           @map("rent_id") @db.Uuid
+
+  // Relations
+  candidate Candidate @relation(fields: [candidateId], references: [candidateId])
+  rent      Rent      @relation(fields: [rentId], references: [rentId])
+
+  @@map("candidacies")
+}
+
+// Table des documents
+model Document {
+  documentId     String       @id @default(uuid()) @map("document_id") @db.Uuid
+  documentType   DocumentType @map("document_type")
+  docNumber      String?      @map("doc_number") @db.VarChar(50)
+  expirationDate DateTime?    @map("expiration_date") @db.Date
+  docPath1       String       @map("doc_path1") @db.VarChar(50)
+  docPath2       String?      @map("doc_path2") @db.VarChar(50)
+  agencyId       String?      @map("agency_id") @db.Uuid
+  companyId      String?      @map("company_id") @db.Uuid
+  userId         String?      @map("user_id") @db.Uuid
+  candidateId    String?      @map("candidate_id") @db.Uuid
+
+  // Relations
+  agency    Agency?    @relation(fields: [agencyId], references: [agencyId])
+  company   Company?   @relation(fields: [companyId], references: [companyId])
+  user      User?      @relation(fields: [userId], references: [userId])
+  candidate Candidate? @relation(fields: [candidateId], references: [candidateId])
+
+  @@map("documents")
+}
+
+// Table des locataires
+model Tenant {
+  tenantId    String    @id @default(uuid()) @map("tenant_id") @db.Uuid
+  totalRent   Int       @map("total_rent")
+  tenantType  String    @map("tenant_type") @db.VarChar(20)
+  dateRent    DateTime  @map("date_rent")
+  tenantPhone String?   @map("tenant_phone") @db.VarChar(20)
+  tenantEmail String?   @map("tenant_email") @db.VarChar(150)
+  userId      String    @map("user_id") @db.Uuid
+
+  // Relations
+  user      User       @relation(fields: [userId], references: [userId])
+  contracts Contract[]
+  invoices  Invoice[]
+  reviews   Review[]
+
+  @@map("tenants")
+}
+
+// Table des propriétaires
+model Owner {
+  ownerId    String  @id @default(uuid()) @map("owner_id") @db.Uuid
+  ownerPhone String? @map("owner_phone") @db.VarChar(20)
+  ownerEmail String? @map("owner_email") @db.VarChar(150)
+  userId     String  @map("user_id") @db.Uuid
+
+  // Relations
+  user               User                @relation(fields: [userId], references: [userId])
+  rents              Rent[]
+  invoices           Invoice[]
+  reviews            Review[]
+  managementMandates ManagementMandate[]
+
+  @@map("owners")
+}
+
+// Table des agences
+model Agency {
+  agencyId   String @id @default(uuid()) @map("agency_id") @db.Uuid
+  agencyName String @map("agency_name") @db.VarChar(200)
+  phone      String @db.VarChar(20)
+  email      String @unique @db.VarChar(150)
+
+  // Relations
+  rents              Rent[]
+  invoices           Invoice[]
+  reviews            Review[]
+  documents          Document[]
+  commonInformations CommonInformation[]
+  agencyEmployees    AgencyEmployee[]
+  managementMandates ManagementMandate[]
+
+  @@map("agencies")
+}
+
+// Table des entreprises
+model Company {
+  companyId String @id @default(uuid()) @map("company_id") @db.Uuid
+  name      String @db.VarChar(200)
+  phone     String @db.VarChar(20)
+  email     String @unique @db.VarChar(150)
+
+  // Relations
+  documents          Document[]
+  commonInformations CommonInformation[]
+
+  @@map("companies")
+}
+
+// Table des mandats de gestion
+model ManagementMandate {
+  mandateId    String    @id @default(uuid()) @map("mandate_id") @db.Uuid
+  description  String?   @db.VarChar(255)
+  startDate    DateTime  @map("start_date")
+  endDate      DateTime? @map("end_date")
+  contractFile String    @map("contract_file") @db.VarChar(50)
+  agencyId     String    @map("agency_id") @db.Uuid
+  ownerId      String    @map("owner_id") @db.Uuid
+  estateId     String    @map("estate_id") @db.Uuid
+
+  // Relations
+  agency Agency @relation(fields: [agencyId], references: [agencyId])
+  owner  Owner  @relation(fields: [ownerId], references: [ownerId])
+  estate Estate @relation(fields: [estateId], references: [estateId])
+
+  @@map("management_mandates")
+}
+
+// Table des employés d'agence
+model AgencyEmployee {
+  agencyId           String @map("agency_id") @db.Uuid
+  userId             String @map("user_id") @db.Uuid
+  registrationNumber String @map("registration_number") @db.VarChar(20)
+  phone              String @db.VarChar(20)
+  email              String @unique @db.VarChar(150)
+
+  // Relations
+  agency Agency @relation(fields: [agencyId], references: [agencyId])
+  user   User   @relation(fields: [userId], references: [userId])
+
+  @@id([agencyId, userId])
+  @@map("agency_employees")
+}
+
+// Table des locations
+model Rent {
+  rentId     String  @id @default(uuid()) @map("rent_id") @db.Uuid
+  typeRent   String  @map("type_rent") @db.VarChar(20)
+  rentAmount Float   @map("rent_amount") @db.DoublePrecision
+  ownerId    String? @map("owner_id") @db.Uuid
+  agencyId   String? @map("agency_id") @db.Uuid
+  rentalId   String  @map("rental_id") @db.Uuid
+
+  // Relations
+  owner       Owner?      @relation(fields: [ownerId], references: [ownerId])
+  agency      Agency?     @relation(fields: [agencyId], references: [agencyId])
+  rental      Rental      @relation(fields: [rentalId], references: [rentalId])
+  candidacies Candidacy[]
+  contracts   Contract[]
+  reviews     Review[]
+
+  @@map("rents")
+}
+
+// Table des locatives
+model Rental {
+  rentalId   String  @id @default(uuid()) @map("rental_id") @db.Uuid
+  rentalType String  @map("rental_type") @db.VarChar(20)
+  surface    Decimal @db.Decimal(8, 2)
+  location   String  @db.VarChar(255)
+  rentAmount Float   @map("rent_amount") @db.DoublePrecision
+  nbrRent    Int     @map("nbr_rent")
+
+  // Relations
+  rents Rent[]
+
+  @@map("rentals")
+}
+
+// Table des biens
+model Estate {
+  estateId  String @id @default(uuid()) @map("estate_id") @db.Uuid
+  location  String @db.VarChar(255)
+  nbrRental Int    @map("nbr_rental")
+
+  // Relations
+  managementMandates ManagementMandate[]
+
+  @@map("estates")
+}
+
+// Table des contrats
+model Contract {
+  contractId String   @id @default(uuid()) @map("contract_id") @db.Uuid
+  startDate  DateTime @map("start_date")
+  endDate    DateTime @map("end_date")
+  rentAmount Float    @map("rent_amount") @db.DoublePrecision
+  tenantId   String   @map("tenant_id") @db.Uuid
+  rentId     String   @map("rent_id") @db.Uuid
+
+  // Relations
+  tenant   Tenant    @relation(fields: [tenantId], references: [tenantId])
+  rent     Rent      @relation(fields: [rentId], references: [rentId])
+  invoices Invoice[]
+
+  @@map("contracts")
+}
+
+// Table des factures
+model Invoice {
+  invoiceId     String        @id @default(uuid()) @map("invoice_id") @db.Uuid
+  code          String
+  amount        Float         @db.DoublePrecision
+  status        InvoiceStatus
+  statusMessage String?       @map("status_message") @db.VarChar(255)
+  tvaAmount     Decimal       @map("tva_amount") @db.Decimal
+  totalAmount   Float         @map("total_amount") @db.DoublePrecision
+  issueAt       DateTime      @map("issue_at")
+  dueAt         DateTime      @map("due_at")
+  completedAt   DateTime?     @map("completed_at")
+  description   String        @db.VarChar(255)
+  feesIncluded  Boolean       @map("fees_included")
+  ownerId       String?       @map("owner_id") @db.Uuid
+  agencyId      String?       @map("agency_id") @db.Uuid
+  tenantId      String?       @map("tenant_id") @db.Uuid
+  contractId    String        @map("contract_id") @db.Uuid
+
+  // Relations
+  owner    Owner?    @relation(fields: [ownerId], references: [ownerId])
+  agency   Agency?   @relation(fields: [agencyId], references: [agencyId])
+  tenant   Tenant?   @relation(fields: [tenantId], references: [tenantId])
+  contract Contract  @relation(fields: [contractId], references: [contractId])
+  payments Payment[]
+  outdates Outdate[]
+
+  @@map("invoices")
+}
+
+// Table des paiements
+model Payment {
+  paymentId     String   @id @default(uuid()) @map("payment_id") @db.Uuid
+  paymentDate   DateTime @map("payment_date")
+  phone         String   @unique @db.VarChar(20)
+  name          String   @db.VarChar(100)
+  firstName     String   @map("first_name") @db.VarChar(100)
+  amountPaid    Float    @map("amount_paid") @db.DoublePrecision
+  status        Boolean
+  statusMessage String?  @map("status_message") @db.VarChar(50)
+  invoiceId     String   @map("invoice_id") @db.Uuid
+
+  // Relations
+  invoice Invoice @relation(fields: [invoiceId], references: [invoiceId])
+
+  @@map("payments")
+}
+
+// Table des retards
+model Outdate {
+  outdateId     String   @id @default(uuid()) @map("outdate_id") @db.Uuid
+  plannedDate   DateTime @map("planned_date")
+  outdateDays   Int      @map("outdate_days")
+  amountOutdate Int      @map("amount_outdate")
+  invoiceId     String   @map("invoice_id") @db.Uuid
+
+  // Relations
+  invoice Invoice @relation(fields: [invoiceId], references: [invoiceId])
+
+  @@map("outdates")
+}
+
+// Table des appréciations
+model Review {
+  reviewId   String   @id @default(uuid()) @map("review_id") @db.Uuid
+  comment    String   @db.VarChar(255)
+  note       Int
+  reviewDate DateTime @map("review_date")
+  ownerId    String?  @map("owner_id") @db.Uuid
+  agencyId   String?  @map("agency_id") @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  rentId     String   @map("rent_id") @db.Uuid
+
+  // Relations
+  owner  Owner?  @relation(fields: [ownerId], references: [ownerId])
+  agency Agency? @relation(fields: [agencyId], references: [agencyId])
+  tenant Tenant  @relation(fields: [tenantId], references: [tenantId])
+  rent   Rent    @relation(fields: [rentId], references: [rentId])
+
+  @@map("reviews")
+}
+
+// Enums
+enum SocialReason {
+  SA
+  SAS
+  SARL
+  SASU
+
+  @@map("social_reason")
+}
+
+enum FieldOfActivity {
+  AGRICULTURE
+  TRANSPORT
+  COMMERCE
+  EDUCATION
+  SANTE
+  TECHNOLOGIE
+  FINANCE
+  INDUSTRIE
+  SERVICE
+  AUTRE
+
+  @@map("field_of_activity")
+}
+
+enum CandidacyStatus {
+  ACCEPTER   @map("Accepter")
+  REJETER    @map("Rejeter")
+  EN_ATTENTE @map("En_Attente")
+
+  @@map("candidacy_status")
+}
+
+enum DocumentType {
+  CNI                @map("CNI")
+  PASSEPORT          @map("Passeport")
+  FACTURE            @map("facture")
+  BILAN_COMPTABLE    @map("Bilan comptable")
+  REGISTRE_COMMERCE  @map("registre de commerce")
+  CREDIT_IMMOBILIER  @map("crédit immobilier")
+
+  @@map("document_type")
+}
+
+enum InvoiceStatus {
+  ENVOYER    @map("Envoyer")
+  RECU       @map("Reçu")
+  ACCEPTER   @map("Accepter")
+  REJETER    @map("Rejeter")
+  EXPIRER    @map("Expirer")
+  EN_ATTENTE @map("En attente")
+
+  @@map("invoice_status")
+}
